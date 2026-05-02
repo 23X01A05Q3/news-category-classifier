@@ -25,6 +25,16 @@ from nltk.tokenize import word_tokenize
 # ─── Download Required NLTK Resources ────────────────────────────────────────
 def download_nltk_resources():
     """Download all required NLTK data packages if not already present."""
+    import os
+    
+    # On Vercel (Serverless), we must use /tmp for downloads
+    if os.environ.get('VERCEL'):
+        nltk_path = '/tmp/nltk_data'
+        if nltk_path not in nltk.data.path:
+            nltk.data.path.append(nltk_path)
+    else:
+        nltk_path = None
+
     resources = [
         ('tokenizers/punkt',        'punkt'),
         ('tokenizers/punkt_tab',    'punkt_tab'),
@@ -37,9 +47,10 @@ def download_nltk_resources():
             nltk.data.find(path)
         except LookupError:
             print(f"  Downloading NLTK resource: {name}")
-            nltk.download(name, quiet=True)
+            nltk.download(name, quiet=True, download_dir=nltk_path)
 
 download_nltk_resources()
+
 
 # ─── Initialise Tools ─────────────────────────────────────────────────────────
 STOP_WORDS   = set(stopwords.words('english'))

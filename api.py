@@ -60,9 +60,10 @@ MODELS = {
     "labels": None
 }
 
-@app.on_event("startup")
-async def startup_event():
-    """Load models on startup."""
+def load_all_models():
+    """Helper to load models into global state."""
+    if MODELS["vectorizer"] is not None:
+        return True
     try:
         v, nb, lr, labels = load_models()
         MODELS["vectorizer"] = v
@@ -70,8 +71,15 @@ async def startup_event():
         MODELS["lr"] = lr
         MODELS["labels"] = labels
         print("Models loaded successfully.")
+        return True
     except Exception as e:
         print(f"Error loading models: {e}")
+        return False
+
+@app.on_event("startup")
+async def startup_event():
+    load_all_models()
+
 
 # ─── Endpoints ───
 
@@ -109,9 +117,9 @@ async def register(req: RegisterRequest):
 
 @app.post("/api/predict")
 async def predict(req: PredictionRequest):
-
-    if MODELS["vectorizer"] is None:
+    if not load_all_models():
         raise HTTPException(status_code=500, detail="Models not loaded")
+
     
     model = MODELS["lr"] if req.model_type == "lr" else MODELS["nb"]
     
