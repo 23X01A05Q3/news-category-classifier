@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | NewsClassifier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root[data-theme="dark"] {
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --bg-gradient: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-dim: rgba(248, 250, 252, 0.5);
+            --accent-glow: rgba(168, 85, 247, 0.4);
+            --sidebar-bg: rgba(15, 23, 42, 0.85);
+            --sidebar-width: 280px;
+            --input-bg: rgba(255, 255, 255, 0.03);
+            --input-color: #fff;
+            --select-bg: rgba(255, 255, 255, 0.05);
+            --toggle-btn-bg: rgba(255, 255, 255, 0.08);
+            --toggle-btn-border: rgba(255, 255, 255, 0.15);
+            --chart-tick-color: rgba(255,255,255,0.5);
+            --chart-label-color: #fff;
+        }
+
+        :root[data-theme="light"] {
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --bg-gradient: linear-gradient(180deg, #f0f4ff 0%, #e8d5ff 100%);
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(99, 102, 241, 0.15);
+            --text-main: #1e1b4b;
+            --text-dim: rgba(30, 27, 75, 0.55);
+            --accent-glow: rgba(168, 85, 247, 0.25);
+            --sidebar-bg: rgba(240, 244, 255, 0.92);
+            --sidebar-width: 280px;
+            --input-bg: rgba(255, 255, 255, 0.8);
+            --input-color: #1e1b4b;
+            --select-bg: rgba(255, 255, 255, 0.9);
+            --toggle-btn-bg: rgba(99, 102, 241, 0.08);
+            --toggle-btn-border: rgba(99, 102, 241, 0.2);
+            --chart-tick-color: rgba(30,27,75,0.5);
+            --chart-label-color: #1e1b4b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; transition: background-color 0.4s ease, color 0.3s ease, border-color 0.3s ease; }
+        body { background: var(--bg-gradient); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+
+        /* ── Theme Toggle ── */
+        .theme-toggle {
+            position: fixed; top: 1.2rem; right: 1.5rem; z-index: 999;
+            width: 44px; height: 44px; border-radius: 50%;
+            background: var(--toggle-btn-bg);
+            border: 1px solid var(--toggle-btn-border);
+            backdrop-filter: blur(10px);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; color: var(--text-main);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .theme-toggle:hover { transform: scale(1.12) rotate(15deg); box-shadow: 0 6px 20px var(--accent-glow); }
+        .theme-toggle .icon-sun  { display: none; }
+        .theme-toggle .icon-moon { display: block; }
+        [data-theme="light"] .theme-toggle .icon-sun  { display: block; }
+        [data-theme="light"] .theme-toggle .icon-moon { display: none; }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 1.5rem;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+        .brand-logo {
+            width: 40px; height: 40px;
+            background: var(--primary-gradient);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+        }
+        .brand-name { font-family: 'Poppins', sans-serif; font-size: 1.4rem; font-weight: 700; background: linear-gradient(to right, #fff, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .nav-section { margin-bottom: 2rem; }
+        .nav-label { font-size: 0.7rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 1rem; }
+        
+        .nav-item {
+            display: flex; align-items: center; gap: 1rem;
+            padding: 0.8rem 1rem;
+            border-radius: 12px;
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-bottom: 0.5rem;
+        }
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.05); color: #fff; }
+        .nav-item.active { border: 1px solid var(--glass-border); background: rgba(168, 85, 247, 0.1); }
+        .nav-item i { width: 20px; text-align: center; }
+
+        .user-profile {
+            margin-top: auto;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            padding: 1rem;
+            border-radius: 16px;
+            display: flex; align-items: center; gap: 0.8rem;
+        }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary-gradient); display: flex; align-items: center; justify-content: center; font-weight: 700; }
+        .user-info { display: flex; flex-direction: column; gap: 0.1rem; }
+        .user-name { font-size: 0.9rem; font-weight: 600; }
+        .user-role { font-size: 0.75rem; color: var(--text-dim); }
+
+        /* ── Main Content ── */
+        .main-content {
+            flex: 1;
+            padding: 2.5rem 3.5rem;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; }
+        .header-title h1 { font-family: 'Poppins', sans-serif; font-size: 1.8rem; font-weight: 700; margin-bottom: 0.3rem; }
+        .header-title p { color: var(--text-dim); font-size: 0.95rem; }
+
+        .grid { display: grid; grid-template-columns: 1fr 380px; gap: 2rem; }
+
+        /* ── Analysis Card (3D Tilt + Float) ── */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            transform-style: preserve-3d;
+            transform: perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0);
+            transition: transform 0.08s ease-out, box-shadow 0.3s ease;
+            will-change: transform;
+            animation: cardFloat 6s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
+        }
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 24px;
+            background: radial-gradient(circle at 50% 50%, rgba(168,85,247,0.08) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .glass-card:hover::before { opacity: 1; }
+        .glass-card > * { position: relative; z-index: 1; }
+        .glass-card:hover {
+            box-shadow: 0 30px 60px rgba(0,0,0,0.35), 0 0 40px rgba(168,85,247,0.15);
+            animation-play-state: paused;
+        }
+        @keyframes cardFloat {
+            0%,100% { transform: perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px); }
+            33%      { transform: perspective(1000px) rotateX(0.6deg) rotateY(0.4deg) translateY(-5px); }
+            66%      { transform: perspective(1000px) rotateX(-0.4deg) rotateY(0.6deg) translateY(-3px); }
+        }
+        /* Tilt shimmer overlay */
+        .tilt-shine {
+            position: absolute;
+            inset: 0;
+            border-radius: 24px;
+            pointer-events: none;
+            z-index: 2;
+            background: radial-gradient(circle at 0% 0%, rgba(255,255,255,0.12) 0%, transparent 55%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .glass-card:hover .tilt-shine { opacity: 1; }
+        .card-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.8rem; }
+        .card-title i { color: #a855f7; }
+
+        .input-area { width: 100%; position: relative; }
+        textarea {
+            width: 100%; height: 180px;
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.2rem;
+            color: var(--input-color); font-size: 1rem;
+            resize: none; outline: none; transition: border-color 0.3s, background 0.3s;
+        }
+        textarea::placeholder { color: var(--text-dim); }
+        textarea:focus { border-color: #a855f7; background: rgba(168, 85, 247, 0.05); }
+
+        .btn-analyze {
+            margin-top: 1.5rem;
+            width: 100%;
+            background: var(--primary-gradient);
+            color: #fff; border: none; padding: 1rem; border-radius: 12px;
+            font-size: 1rem; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 0.8rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-analyze:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(168, 85, 247, 0.3); }
+
+        /* ── Results Panel ── */
+        .results-panel { display: none; margin-top: 2rem; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .result-main {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.5rem; background: rgba(168, 85, 247, 0.1);
+            border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 16px;
+            margin-bottom: 1.5rem;
+        }
+        .cat-badge { background: #a855f7; color: #fff; padding: 0.4rem 1rem; border-radius: 50px; font-weight: 700; font-size: 0.9rem; }
+        .conf-score { font-size: 1.5rem; font-weight: 800; color: #fff; }
+
+        .chart-container { width: 100%; height: 300px; }
+
+        /* ── Custom Scrollbar ── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+
+        /* ── Light mode select fix ── */
+        [data-theme="light"] select option { background: #f0f4ff; color: #1e1b4b; }
+    </style>
+</head>
+<body>
+
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle dark/light theme">
+        <i class="fa-solid fa-moon icon-moon"></i>
+        <i class="fa-solid fa-sun icon-sun"></i>
+    </button>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-logo"><i class="fa-solid fa-newspaper"></i></div>
+            <div class="brand-name">NewsClassifier</div>
+        </div>
+
+        <nav class="nav-section">
+            <div class="nav-label">Core Engine</div>
+            <a href="#" class="nav-item active" onclick="showPage('real-time')"><i class="fa-solid fa-bolt"></i> Real-time Analysis</a>
+            <a href="#" class="nav-item" onclick="showPage('batch')"><i class="fa-solid fa-layer-group"></i> Batch Processing</a>
+            <a href="#" class="nav-item" onclick="showPage('history')"><i class="fa-solid fa-clock-rotate-left"></i> History Log</a>
+        </nav>
+
+        <nav class="nav-section">
+            <div class="nav-label">Administration</div>
+            <a href="#" class="nav-item" onclick="showPage('settings')"><i class="fa-solid fa-gear"></i> Model Settings</a>
+            <a href="#" class="nav-item" onclick="showPage('data')"><i class="fa-solid fa-database"></i> Training Data</a>
+        </nav>
+
+        <div class="user-profile">
+            <div class="avatar" id="userInitial">A</div>
+            <div class="user-info">
+                <div class="user-name" id="userName">Admin</div>
+                <div class="user-role">System Analyst</div>
+            </div>
+            <a href="index.html" style="margin-left: auto; color: var(--text-dim);"><i class="fa-solid fa-right-from-bracket"></i></a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="header">
+            <div class="header-title">
+                <h1>Neural Analysis Engine</h1>
+                <p>Welcome back, Analyst. System status: <span style="color: #10b981;">● Optimal</span></p>
+            </div>
+            <div class="header-actions">
+                <!-- Add search or notifications here -->
+            </div>
+        </header>
+
+        <!-- ── Page: Real-time Analysis ── -->
+        <div id="page-real-time" class="dashboard-page active">
+            <div class="grid">
+                <section class="analysis-section">
+                    <div class="glass-card">
+                        <div class="card-title">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                            Input Analysis Workspace
+                        </div>
+                        <div class="input-area">
+                            <textarea id="headlineInput" placeholder="Paste news headline or story summary here for deep neural classification..."></textarea>
+                        </div>
+                        <button class="btn-analyze" id="analyzeBtn">
+                            <i class="fa-solid fa-microchip"></i>
+                            Execute Neural Pass
+                        </button>
+                    </div>
+
+                    <div class="results-panel" id="resultsPanel">
+                        <div class="glass-card">
+                            <div class="card-title"><i class="fa-solid fa-square-poll-vertical"></i> Classification Intelligence</div>
+                            <div class="result-main">
+                                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">Top Predicted Category</span>
+                                    <span class="cat-badge" id="categoryLabel">TECHNOLOGY</span>
+                                </div>
+                                <div style="text-align: right;">
+                                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">Neural Confidence</span>
+                                    <div class="conf-score" id="confidenceLabel">98.4%</div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 1.5rem; font-size: 0.9rem; color: var(--text-dim);">
+                                <i class="fa-solid fa-circle-info" style="margin-right: 0.5rem;"></i>
+                                The model analyzed the semantic structure and identified key features consistent with this category.
+                            </div>
+
+                            <div class="chart-container">
+                                <canvas id="probChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <aside class="info-aside">
+                    <div class="glass-card" style="margin-bottom: 2rem;">
+                        <div class="card-title"><i class="fa-solid fa-circle-nodes"></i> Model Insight</div>
+                        <div style="font-size: 0.88rem; line-height: 1.6; color: var(--text-dim);">
+                            You are currently using the <b id="activeModelLabel">Logistic Regression</b> model optimized for high-dimensional TF-IDF vectors.
+                            <br><br>
+                            <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; border: 1px solid var(--glass-border);">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <span>Training Accuracy</span>
+                                    <span style="color: #fff;">92.4%</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Latency</span>
+                                    <span style="color: #fff;">12ms</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card">
+                        <div class="card-title"><i class="fa-solid fa-lightbulb"></i> Quick Tips</div>
+                        <ul style="font-size: 0.85rem; color: var(--text-dim); list-style: none; display: flex; flex-direction: column; gap: 1rem;">
+                            <li><i class="fa-solid fa-check" style="color: #10b981; margin-right: 0.5rem;"></i> Use full sentences for better context extraction.</li>
+                            <li><i class="fa-solid fa-check" style="color: #10b981; margin-right: 0.5rem;"></i> Avoid overly short headlines.</li>
+                            <li><i class="fa-solid fa-check" style="color: #10b981; margin-right: 0.5rem;"></i> Check "History" for past results.</li>
+                        </ul>
+                    </div>
+                </aside>
+            </div>
+        </div>
+
+        <!-- ── Page: Batch Processing ── -->
+        <div id="page-batch" class="dashboard-page" style="display: none;">
+            <div class="glass-card">
+                <div class="card-title"><i class="fa-solid fa-layer-group"></i> Batch Neural Processing</div>
+                <p style="color: var(--text-dim); margin-bottom: 1.5rem;">Enter multiple headlines (one per line) to process them in a single neural pass.</p>
+                <textarea id="batchInput" style="height: 300px;" placeholder="Headline 1&#10;Headline 2&#10;Headline 3..."></textarea>
+                <button class="btn-analyze" id="batchBtn" style="margin-top: 1.5rem;">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Process Batch
+                </button>
+                <div id="batchResults" style="margin-top: 2rem;"></div>
+            </div>
+        </div>
+
+        <!-- ── Page: History Log ── -->
+        <div id="page-history" class="dashboard-page" style="display: none;">
+            <div class="glass-card">
+                <div class="card-title" style="display: flex; justify-content: space-between;">
+                    <span><i class="fa-solid fa-clock-rotate-left"></i> Classification History</span>
+                    <button onclick="clearHistory()" style="background: none; border: none; color: #ef4444; font-size: 0.8rem; cursor: pointer;">Clear All</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                        <thead style="border-bottom: 1px solid var(--glass-border);">
+                            <tr style="text-align: left; color: var(--text-dim); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">
+                                <th style="padding: 1rem;">Timestamp</th>
+                                <th style="padding: 1rem;">Headline</th>
+                                <th style="padding: 1rem;">Category</th>
+                                <th style="padding: 1rem;">Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody" style="font-size: 0.9rem;">
+                            <!-- History rows will go here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Page: Model Settings ── -->
+        <div id="page-settings" class="dashboard-page" style="display: none;">
+            <div class="glass-card" style="max-width: 600px;">
+                <div class="card-title"><i class="fa-solid fa-gear"></i> Engine Configuration</div>
+                <div style="display: flex; flex-direction: column; gap: 2rem;">
+                    <div>
+                        <label class="nav-label">Active Classifier</label>
+                        <select id="modelSelector" style="width: 100%; padding: 1rem; background: var(--select-bg); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--input-color); outline: none;">
+                            <option value="lr" selected>Logistic Regression (Production)</option>
+                            <option value="nb">Multinomial Naive Bayes (Standard)</option>
+                        </select>
+                        <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.5rem;">Logistic Regression is generally more accurate for this dataset.</p>
+                    </div>
+                    <div>
+                        <label class="nav-label">Visual Preferences</label>
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 12px;">
+                            <span>Show probability charts by default</span>
+                            <input type="checkbox" checked style="accent-color: #a855f7; width: 20px; height: 20px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Page: Training Data ── -->
+        <div id="page-data" class="dashboard-page" style="display: none;">
+            <div class="glass-card">
+                <div class="card-title"><i class="fa-solid fa-database"></i> Neural Training Corpus</div>
+                <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 16px; text-align: center;">
+                        <div style="font-size: 2rem; font-weight: 800; color: #a855f7;">6,000</div>
+                        <div class="nav-label">Total Samples</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 16px; text-align: center;">
+                        <div style="font-size: 2rem; font-weight: 800; color: #a855f7;">10</div>
+                        <div class="nav-label">Categories</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 16px; text-align: center;">
+                        <div style="font-size: 2rem; font-weight: 800; color: #a855f7;">92%</div>
+                        <div class="nav-label">Avg. Precision</div>
+                    </div>
+                </div>
+                <p style="margin-top: 2rem; color: var(--text-dim); font-size: 0.9rem;">The current model was trained on the HuffPost News Dataset (v2024.1). Last update: Today.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = "http://localhost:8000";
+        let chart = null;
+        let selectedModel = "lr";
+
+        // ── Theme Management ──
+        const html = document.documentElement;
+        const themeToggle = document.getElementById('themeToggle');
+
+        function applyTheme(theme) {
+            html.setAttribute('data-theme', theme);
+            localStorage.setItem('nc_theme', theme);
+            // Update chart colors if chart exists
+            if (chart) {
+                const tickColor = theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(30,27,75,0.5)';
+                const labelColor = theme === 'dark' ? '#fff' : '#1e1b4b';
+                chart.options.scales.x.ticks.color = tickColor;
+                chart.options.scales.y.ticks.color = labelColor;
+                chart.update();
+            }
+        }
+
+        const savedTheme = localStorage.getItem('nc_theme') || 'dark';
+        applyTheme(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const current = html.getAttribute('data-theme');
+            applyTheme(current === 'dark' ? 'light' : 'dark');
+        });
+
+        // ── Session Handling ──
+        window.onload = () => {
+            const userData = JSON.parse(localStorage.getItem('user'));
+            if (!userData) {
+                window.location.href = 'index.html';
+                return;
+            }
+            document.getElementById('userName').innerText = userData.username.charAt(0).toUpperCase() + userData.username.slice(1);
+            document.getElementById('userInitial').innerText = userData.username.charAt(0).toUpperCase();
+            
+            updateHistoryTable();
+        };
+
+        // ── Page Router ──
+        function showPage(pageId) {
+            // Update Sidebar UI
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('onclick')?.includes(pageId)) item.classList.add('active');
+            });
+
+            // Update Page Visibility
+            document.querySelectorAll('.dashboard-page').forEach(page => {
+                page.style.display = 'none';
+            });
+            document.getElementById(`page-${pageId}`).style.display = 'block';
+
+            if (pageId === 'history') updateHistoryTable();
+        }
+
+        // ── Model Selector ──
+        document.getElementById('modelSelector').addEventListener('change', (e) => {
+            selectedModel = e.target.value;
+            const label = selectedModel === 'lr' ? 'Logistic Regression' : 'Multinomial Naive Bayes';
+            document.getElementById('activeModelLabel').innerText = label;
+        });
+
+        // ── Real-time Analysis ──
+        document.getElementById('analyzeBtn').addEventListener('click', async () => {
+            const headline = document.getElementById('headlineInput').value.trim();
+            if (!headline) return;
+
+            const btn = document.getElementById('analyzeBtn');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/predict`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ headline, model_type: selectedModel })
+                });
+
+                const data = await response.json();
+                displayResults(data);
+                saveToHistory(headline, data.category, Math.max(...Object.values(data.probabilities)));
+            } catch (err) {
+                console.error(err);
+                alert("Error connecting to API. Make sure api.py is running.");
+            } finally {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+        });
+
+        // ── Batch Processing ──
+        document.getElementById('batchBtn').addEventListener('click', async () => {
+            const text = document.getElementById('batchInput').value.trim();
+            if (!text) return;
+
+            const headlines = text.split('\n').filter(h => h.trim() !== "");
+            const resultsDiv = document.getElementById('batchResults');
+            resultsDiv.innerHTML = '<div style="color: var(--text-dim); text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Processing batch...</div>';
+
+            let html = '<div style="display: flex; flex-direction: column; gap: 0.8rem;">';
+            
+            for (const h of headlines) {
+                try {
+                    const response = await fetch(`${API_URL}/predict`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ headline: h, model_type: selectedModel })
+                    });
+                    const data = await response.json();
+                    html += `
+                        <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--glass-border);">
+                            <span style="font-size: 0.85rem; color: #fff;">${h}</span>
+                            <span style="background: #a855f7; color: #fff; padding: 0.2rem 0.8rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700;">${data.category}</span>
+                        </div>
+                    `;
+                    saveToHistory(h, data.category, Math.max(...Object.values(data.probabilities)));
+                } catch (e) {
+                    html += `<div style="color: #ef4444;">Error processing: ${h}</div>`;
+                }
+            }
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+        });
+
+        // ── History Logic ──
+        function saveToHistory(headline, category, confidence) {
+            const history = JSON.parse(localStorage.getItem('news_history') || '[]');
+            history.unshift({
+                timestamp: new Date().toLocaleTimeString(),
+                headline: headline.length > 50 ? headline.substring(0, 50) + "..." : headline,
+                category,
+                confidence: (confidence * 100).toFixed(1) + "%"
+            });
+            localStorage.setItem('news_history', JSON.stringify(history.slice(0, 50)));
+        }
+
+        function updateHistoryTable() {
+            const history = JSON.parse(localStorage.getItem('news_history') || '[]');
+            const body = document.getElementById('historyBody');
+            body.innerHTML = history.map(row => `
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                    <td style="padding: 1rem; color: var(--text-dim);">${row.timestamp}</td>
+                    <td style="padding: 1rem; font-weight: 500;">${row.headline}</td>
+                    <td style="padding: 1rem;"><span style="color: #a855f7;">${row.category}</span></td>
+                    <td style="padding: 1rem; text-align: right;">${row.confidence}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" style="padding: 2rem; text-align: center; color: var(--text-dim);">No history records found.</td></tr>';
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('news_history');
+            updateHistoryTable();
+        }
+
+        function displayResults(data) {
+            document.getElementById('resultsPanel').style.display = 'block';
+            document.getElementById('categoryLabel').innerText = data.category;
+            
+            const probs = data.probabilities;
+            const topProb = Math.max(...Object.values(probs));
+            document.getElementById('confidenceLabel').innerText = (topProb * 100).toFixed(1) + "%";
+
+            const sortedEntries = Object.entries(probs)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+            
+            const labels = sortedEntries.map(e => e[0]);
+            const values = sortedEntries.map(e => e[1] * 100);
+
+            if (chart) chart.destroy();
+            const ctx = document.getElementById('probChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Confidence (%)',
+                        data: values,
+                        backgroundColor: 'rgba(168, 85, 247, 0.6)',
+                        borderColor: '#a855f7',
+                        borderWidth: 1,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: html.getAttribute('data-theme') === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(30,27,75,0.5)' } },
+                        y: { grid: { display: false }, ticks: { color: html.getAttribute('data-theme') === 'dark' ? '#fff' : '#1e1b4b' } }
+                    }
+                }
+            });
+        }
+    </script>
+
+    <script>
+        /* ══ 3D Magnetic Tilt Engine ══ */
+        function initTilt() {
+            document.querySelectorAll('.glass-card').forEach(card => {
+                // inject shine layer if not present
+                if (!card.querySelector('.tilt-shine')) {
+                    const shine = document.createElement('div');
+                    shine.className = 'tilt-shine';
+                    card.appendChild(shine);
+                }
+
+                card.addEventListener('mousemove', (e) => {
+                    const rect   = card.getBoundingClientRect();
+                    const cx     = rect.left + rect.width  / 2;
+                    const cy     = rect.top  + rect.height / 2;
+                    const dx     = (e.clientX - cx) / (rect.width  / 2);  // -1 to +1
+                    const dy     = (e.clientY - cy) / (rect.height / 2);  // -1 to +1
+                    const tiltX  = -dy * 10;   // max 10deg up/down
+                    const tiltY  =  dx * 10;   // max 10deg left/right
+                    const lift   = 16;          // px lift on hover
+
+                    card.style.transform =
+                        `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateY(-${lift}px) scale(1.02)`;
+                    card.style.boxShadow =
+                        `${-dx*20}px ${-dy*20 + 30}px 60px rgba(0,0,0,0.35),
+                         0 0 50px rgba(168,85,247,${0.08 + Math.abs(dx) * 0.12})`;
+
+                    // Move shine based on cursor
+                    const shine = card.querySelector('.tilt-shine');
+                    if (shine) {
+                        const px = ((e.clientX - rect.left) / rect.width  * 100).toFixed(1);
+                        const py = ((e.clientY - rect.top)  / rect.height * 100).toFixed(1);
+                        shine.style.background =
+                            `radial-gradient(circle at ${px}% ${py}%, rgba(255,255,255,0.14) 0%, transparent 55%)`;
+                    }
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = '';
+                    card.style.boxShadow = '';
+                    card.style.transition = 'transform 0.6s cubic-bezier(0.23,1,0.32,1), box-shadow 0.6s ease';
+                    setTimeout(() => { card.style.transition = ''; }, 650);
+                });
+
+                card.addEventListener('mouseenter', () => {
+                    card.style.transition = 'transform 0.08s ease-out, box-shadow 0.1s ease';
+                });
+            });
+        }
+
+        // Run on load, and re-run if new cards appear (results panel)
+        initTilt();
+        const observer = new MutationObserver(initTilt);
+        observer.observe(document.body, { childList: true, subtree: true });
+    </script>
+</body>
+</html>
