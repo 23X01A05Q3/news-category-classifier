@@ -36,10 +36,11 @@ import os
 import pickle
 import numpy as np
 import pandas as pd
-import matplotlib
-matplotlib.use('Agg')          # non-interactive backend (safe for all environments)
-import matplotlib.pyplot as plt
-import seaborn as sns
+# import matplotlib
+# matplotlib.use('Agg')          # non-interactive backend (safe for all environments)
+# import matplotlib.pyplot as plt
+# import seaborn as sns
+
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
@@ -199,7 +200,13 @@ def plot_confusion_matrix(y_test, y_pred, class_names,
     model_name  : string used in the plot title
     save_path   : if provided, save the figure to this path
     """
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
     cm = confusion_matrix(y_test, y_pred, labels=class_names)
+
 
     # Normalise rows to show recall rates (0–1)
     cm_norm = cm.astype(float) / cm.sum(axis=1, keepdims=True)
@@ -238,7 +245,12 @@ def plot_comparison(results: list, save_path: str = None):
     results   : list of dicts returned by evaluate_model()
     save_path : optional file path to save the figure
     """
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
     metrics = ['accuracy', 'precision', 'recall', 'f1']
+
     labels  = [r['model_name'] for r in results]
     x       = np.arange(len(metrics))
     width   = 0.35
