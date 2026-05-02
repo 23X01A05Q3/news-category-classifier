@@ -1,44 +1,9 @@
-# Python
 __pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-.Python
-*.egg
-*.egg-info/
-dist/
-build/
-*.so
+*.pyc
 .env
-.venv
-env/
 venv/
-ENV/
-
-# Jupyter
-.ipynb_checkpoints/
-
-# Model files (large binaries)
-models/*.pkl
-models/*.joblib
-models/*.h5
-models/*.pt
-models/*.bin
-
-# Data files (large)
-data/*.csv
-data/*.json
-data/*.parquet
-
-# Outputs
+env/
+data/
 outputs/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
+.vercel
+node_modules
