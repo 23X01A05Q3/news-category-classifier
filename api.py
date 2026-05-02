@@ -12,6 +12,8 @@ from preprocessing import clean_text
 from model import load_models, predict_category
 
 app = FastAPI(title="News Classifier API")
+api_router = FastAPI()
+
 
 # Enable CORS for the frontend
 app.add_middleware(
@@ -73,8 +75,9 @@ async def startup_event():
 
 # ─── Endpoints ───
 
-@app.post("/login")
+@app.post("/api/login")
 async def login(req: LoginRequest):
+
     email = req.email.strip().lower()
     user  = USERS.get(email)
     if not user:
@@ -88,8 +91,9 @@ async def login(req: LoginRequest):
     return {"status": "success", "token": "mock-jwt-token",
             "username": user["username"], "email": email}
 
-@app.post("/register", status_code=201)
+@app.post("/api/register", status_code=201)
 async def register(req: RegisterRequest):
+
     email = req.email.strip().lower()
     if email in USERS:
         raise HTTPException(status_code=409, detail="An account with this email already exists.")
@@ -103,8 +107,9 @@ async def register(req: RegisterRequest):
     }
     return {"status": "created", "username": req.username, "email": email}
 
-@app.post("/predict")
+@app.post("/api/predict")
 async def predict(req: PredictionRequest):
+
     if MODELS["vectorizer"] is None:
         raise HTTPException(status_code=500, detail="Models not loaded")
     
@@ -125,8 +130,9 @@ async def predict(req: PredictionRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/health")
+@app.get("/api/health")
 async def health():
+
     return {"status": "healthy", "models_loaded": MODELS["vectorizer"] is not None}
 
 if __name__ == "__main__":
